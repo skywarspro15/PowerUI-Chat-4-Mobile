@@ -91,6 +91,7 @@ export default function App() {
 }
 
 const LoadScreen = ({ navigation }) => {
+  const [loadState, setLoad] = useState("Loading in...");
   const userExists = async () => {
     const isUser = await SecureStore.getItemAsync("username");
     if (isUser) {
@@ -102,28 +103,32 @@ const LoadScreen = ({ navigation }) => {
           encodeURI(await SecureStore.getItemAsync("password"))
       );
       if (result.trim() == "New user" || result.trim() == "Existing user") {
+        setLoad(
+          "Welcome back, " + (await SecureStore.getItemAsync("username")) + "!"
+        );
         navigation.reset({
           index: 0,
           routes: [{ name: "Chats" }],
         });
       } else if (result.trim() == "Password's not valid") {
+        setLoad("Session expired");
+        SecureStore.deleteItemAsync("username");
+        SecureStore.deleteItemAsync("password");
         navigation.reset({
           index: 0,
           routes: [{ name: "Home" }],
         });
-        Alert.alert("Unable to log in", "Invalid password.", [
-          { text: "OK", onPress: () => console.log("OK Pressed") },
-        ]);
       } else if (result.trim() == "Not a valid user") {
+        setLoad("User terminated");
+        SecureStore.deleteItemAsync("username");
+        SecureStore.deleteItemAsync("password");
         navigation.reset({
           index: 0,
           routes: [{ name: "Home" }],
         });
-        Alert.alert("Unable to log in", "No such user: " + username, [
-          { text: "OK", onPress: () => console.log("OK Pressed") },
-        ]);
       }
     } else {
+      setLoad("New user");
       navigation.reset({
         index: 0,
         routes: [{ name: "Home" }],
@@ -138,6 +143,8 @@ const LoadScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#FFFFF" />
+      <Text style={styles.paragraph}></Text>
+      <Text style={styles.paragraph}>{loadState}</Text>
       <StatusBar style="light-content" />
     </View>
   );
